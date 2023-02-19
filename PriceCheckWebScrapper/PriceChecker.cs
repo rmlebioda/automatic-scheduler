@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.DevTools;
 using OpenQA.Selenium.Firefox;
 using PriceCheckWebScrapper.Core;
 using PriceCheckWebScrapper.Core.Mail;
@@ -14,10 +13,10 @@ namespace PriceCheckWebScrapper;
 /// </summary>
 public class PriceChecker
 {
-    public readonly ILogger Logger;
     private readonly Dictionary<Uri, ProductPriceOffersReport> _lastSentUrlsReports = new();
     private readonly PriceCheckerOptions _options;
     private readonly Dictionary<string, IWebDriver> _webDrivers = new();
+    public readonly ILogger Logger;
 
     public PriceChecker(PriceCheckerOptions options, ILogger logger)
     {
@@ -141,7 +140,8 @@ public class PriceChecker
         {
             if (DoesQualifyForReporting(report))
             {
-                Logger.LogInformation("Report {Report} is qualifying for sending via email and will be sent shortly", report.ToString());
+                Logger.LogInformation("Report {Report} is qualifying for sending via email and will be sent shortly",
+                    report.ToString());
                 reportsToSend.Add(report);
             }
             else
@@ -149,10 +149,12 @@ public class PriceChecker
                 Logger.LogInformation("Report {Report} does not qualify for sending via email", report.ToString());
             }
         }
-        
-        SendReports(reportsToSend);
 
-        UpdateSentReports(reportsToSend);
+        if (reportsToSend.Any())
+        {
+            SendReports(reportsToSend);
+            UpdateSentReports(reportsToSend);
+        }
 
         bool DoesQualifyForReporting(ProductPriceOffersReport report)
         {
@@ -167,20 +169,20 @@ public class PriceChecker
             var builder = new MailBuilder(_options.EmailProviderSendingOptions, reports);
             var title = builder.Title;
             var body = builder.GetBody();
-            Logger.LogInformation("Sending email to {TargetEmail} with title {Title} and body {Body}", builder.TargetEmail, title, body);
+            Logger.LogInformation("Sending email to {TargetEmail} with title {Title} and body {Body}",
+                builder.TargetEmail, title, body);
             _options.MailManager.SendEmail(builder.TargetEmail, title, body);
         }
-        
+
         void UpdateSentReports(List<ProductPriceOffersReport> productPriceOffersReports)
         {
             foreach (var report in productPriceOffersReports)
             {
                 if (!_lastSentUrlsReports.ContainsKey(report.Uri))
                     _lastSentUrlsReports.Add(report.Uri, report);
-                
+
                 _lastSentUrlsReports[report.Uri] = report;
             }
         }
-
     }
 }
