@@ -2,7 +2,7 @@ namespace PriceCheckWebScrapper;
 
 public enum WebDriverType
 {
-    NotSet = 0,
+    Default = 0,
     Chrome,
     Firefox
 }

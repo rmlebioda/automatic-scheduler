@@ -3,7 +3,7 @@ using System.Net.Mail;
 
 namespace MailManager;
 
-public class MailManager
+public record MailManager
 {
     private readonly MailAddress _senderEmailAddress;
     private readonly EmailProvider _emailProvider;

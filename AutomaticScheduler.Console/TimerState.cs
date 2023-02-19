@@ -2,8 +2,8 @@ using PriceCheckWebScrapper;
 
 namespace AutomaticScheduler.Console;
 
-internal class TimerState
+internal record TimerState
 {
-    public PriceChecker PriceChecker;
-    public Options Options;
+    public PriceChecker PriceChecker { get; init; }
+    public Options Options { get; init; }
 }

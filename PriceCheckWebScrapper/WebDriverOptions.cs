@@ -1,6 +1,6 @@
 namespace PriceCheckWebScrapper;
 
-public class WebDriverOptions
+public readonly record struct WebDriverOptions
 {
-    public WebDriverType WebDriverType { get; set; }
+    public WebDriverType WebDriverType { get; init; }
 }

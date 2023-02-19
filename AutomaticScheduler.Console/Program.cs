@@ -6,8 +6,40 @@ using PriceCheckWebScrapper;
 using Serilog;
 using Serilog.Core;
 
-Parser.Default.ParseArguments<Options>(args)
-    .WithParsedAsync(async options => await Start(options));
+PriceCheckerOptions CreatePriceCheckerOptions(Options programOptions, MailManager.MailManager mailManager)
+{
+    return new PriceCheckerOptions
+    {
+        LogDirectory = programOptions.LogFile is null ? null :
+            Directory.Exists(programOptions.LogFile) ? programOptions.LogFile :
+            Directory.GetParent(programOptions.LogFile)?.FullName,
+        MailManager = mailManager,
+        RunningOptions = PriceCheckerRunningOption.Asynchronously,
+        EmailProviderSendingOptions = new EmailProviderSendingOptions
+        {
+            AttachCheckResult = true,
+            EmailProviderSendingOptionsLogs = true,
+            TargetEmail = programOptions.EmailManagerTargetEmail
+        },
+        WebDriverOptions = new WebDriverOptions
+        {
+            WebDriverType = programOptions.WebDriver ?? WebDriverType.Default
+        },
+        LoadingTimeout = TimeSpan.FromSeconds(programOptions.Timeout),
+        FailureRetries = programOptions.Retries,
+        WebsiteCredentialls = new WebsiteCredentialls
+        {
+            CeneoLogin = programOptions.CeneoLogin,
+            CeneoPassword = programOptions.CeneoPassword
+        },
+        MakeScreenshotPastFailureLimit = programOptions.MakeScreenshotPastFailureLimit ?? false
+    };
+}
+
+var parserResult = Parser.Default.ParseArguments<Options>(args);
+parserResult
+    .WithParsed(Start)
+    .WithNotParsed(error => Console.Error.WriteLine(string.Join(Environment.NewLine, error.ToString())));
 
 EmailProvider DetectEmailProvider(string email)
 {
@@ -20,13 +52,13 @@ EmailProvider DetectEmailProvider(string email)
     return EmailProvider.Unknown;
 }
 
-Logger CreateLogger(Options options)
+Logger CreateSerilogLogger(Options options)
 {
     var logger = new LoggerConfiguration();
 
     if (options.Verbosity.HasValue)
         logger.MinimumLevel.Is(options.Verbosity.Value);
-    if (options.WriteToConsole == true)
+    if (options.WriteToConsole)
         logger.WriteTo.Console();
     if (!string.IsNullOrEmpty(options.LogFile))
         logger.WriteTo.File(options.LogFile,
@@ -37,37 +69,29 @@ Logger CreateLogger(Options options)
     return logger.CreateLogger();
 }
 
-async Task Start(Options options)
+void Start(Options options)
 {
-    var logger = CreateLogger(options);
+    Console.WriteLine($"Launched program, set variables: {options}");
+    var serilogLogger = CreateSerilogLogger(options);
 
     var mailManager = new MailManager.MailManager(DetectEmailProvider(options.EmailManagerSenderEmail),
         options.EmailManagerSenderEmail,
         options.EmailManagerSenderPassword);
 
-    var checkerOptions = new PriceCheckerOptions
-    {
-        MailManager = mailManager,
-        RunningOptions = PriceCheckerRunningOption.Asynchronously,
-        EmailProviderSendingOptions = new EmailProviderSendingOptions
+    var checkerOptions = CreatePriceCheckerOptions(options, mailManager);
+    var logger = LoggerFactory.Create(configuration =>
         {
-            AttachCheckResult = true,
-            EmailProviderSendingOptionsLogs = true
-        },
-        WebDriverOptions = new WebDriverOptions
-        {
-            WebDriverType = options.WebDriver ?? WebDriverType.Chrome
+            configuration.AddSerilog(serilogLogger);
+            if (options.WriteToConsole)
+                configuration.AddConsole();
         }
-    };
-    var ilogger = LoggerFactory.Create(configuration => configuration.AddSerilog(logger)).CreateLogger("");
-    var checker = new PriceChecker(checkerOptions, ilogger);
+    ).CreateLogger("");
+    logger.LogInformation("Started application");
+    var checker = new PriceChecker(checkerOptions, logger);
 
     var timer = RunScheduler(checker, options);
-    
-    while (true)
-    {
-        Thread.Sleep(Timeout.Infinite);
-    }
+
+    while (true) Thread.Sleep(Timeout.Infinite);
 }
 
 Timer RunScheduler(PriceChecker checker, Options options)
@@ -75,18 +99,19 @@ Timer RunScheduler(PriceChecker checker, Options options)
     // ReSharper disable once AsyncVoidLambda
     return new Timer(async state =>
         {
+            var stateAsTimer = ((TimerState)state!);
             try
             {
-                await ExecuteAsync((TimerState) state!);
+                await ExecuteAsync(stateAsTimer);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                stateAsTimer.PriceChecker.Logger.LogError(string.Format("Unhandled error occurred during executing timer: {0}", e.ToString()));
                 throw;
             }
         },
-        new TimerState {Options = options, PriceChecker = checker},
-        DateTime.Now - DateTime.Parse(options.StartDateTime),
+        new TimerState { Options = options, PriceChecker = checker },
+        options.StartDateTime is null ? TimeSpan.Zero : DateTime.Now - DateTime.Parse(options.StartDateTime),
         TimeSpan.FromMinutes(options.Interval));
 }
 
