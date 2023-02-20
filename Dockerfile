@@ -20,9 +20,6 @@ WORKDIR /geckodriver
 RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.32.2/geckodriver-v0.32.2-linux64.tar.gz
 RUN tar -xvf geckodriver-v0.32.2-linux64.tar.gz
 RUN mv geckodriver /app
-#CMD mv geckodriver /usr/local/bin/
-#WORKDIR /usr/local/bin/
-#CMD chmod +x geckodriver
 
 RUN apk update
 RUN apk add aspnetcore7-runtime
@@ -44,7 +41,5 @@ ENV TARGET_MAIL=$target_mail
 ARG url
 ENV URL=$url
 
-# ENTRYPOINT ["dotnet", "DotNet.Docker.dll"]
-# ENTRYPOINT ["dotnet", "AutomaticScheduler.Console.dll", "-f", $log_path, "-c", "true" , "-e", "${sender_mail}", "-p", "${sender_pass}", "-t", "${target_mail}", "-u", "${url}", "-i", "30", "-v", "Verbose"]
 CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i 30 -v "Verbose"
 
