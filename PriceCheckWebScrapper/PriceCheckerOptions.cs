@@ -46,4 +46,9 @@ public readonly record struct PriceCheckerOptions()
     /// Website login credentials
     /// </summary>
     public WebsiteCredentialls WebsiteCredentialls { get; init; }
+    
+    /// <summary>
+    /// Price difference in percentage, to which change of best price is considered as worthy of sending email
+    /// </summary>
+    public double PriceDifferencePercentage { get; init; }
 }

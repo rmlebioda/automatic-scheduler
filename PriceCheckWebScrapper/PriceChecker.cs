@@ -161,7 +161,7 @@ public class PriceChecker
             if (!_lastSentUrlsReports.ContainsKey(report.Uri))
                 return true;
 
-            return _lastSentUrlsReports[report.Uri].DoesQualifyForReporting(report);
+            return _lastSentUrlsReports[report.Uri].DoesQualifyForReporting(report, Options.PriceDifferencePercentage);
         }
 
         void SendReports(IEnumerable<ProductPriceOffersReport> reports)

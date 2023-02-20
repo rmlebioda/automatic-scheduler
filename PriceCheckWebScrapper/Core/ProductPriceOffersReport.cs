@@ -11,11 +11,11 @@ public readonly record struct ProductPriceOffersReport(Uri Uri,
         return new(uri, productName, Enumerable.Empty<SingularProductPriceOffer>());
     }
 
-    public bool DoesQualifyForReporting(ProductPriceOffersReport otherReport)
+    public bool DoesQualifyForReporting(ProductPriceOffersReport otherReport, double priceDifferencePercentage)
     {
         var thisBestOffer = ProductPriceOffers.MinBy(offer => offer.Price);
         var otherBestOffer = otherReport.ProductPriceOffers.MinBy(offer => offer.Price);
-        if (Math.Abs(thisBestOffer.Price - otherBestOffer.Price) > thisBestOffer.Price / 100)
+        if (Math.Abs(thisBestOffer.Price - otherBestOffer.Price) > thisBestOffer.Price * (decimal)priceDifferencePercentage / 100)
             return true;
         return false;
     }

@@ -32,7 +32,8 @@ PriceCheckerOptions CreatePriceCheckerOptions(Options programOptions, MailManage
             CeneoLogin = programOptions.CeneoLogin,
             CeneoPassword = programOptions.CeneoPassword
         },
-        MakeScreenshotPastFailureLimit = programOptions.MakeScreenshotPastFailureLimit ?? false
+        MakeScreenshotPastFailureLimit = programOptions.MakeScreenshotPastFailureLimit ?? false,
+        PriceDifferencePercentage = programOptions.PriceDifferencePercentage
     };
 }
 

@@ -24,6 +24,10 @@ public class Options
     [Option('i', "interval", Required = true,
         HelpText = "Interval in minutes, how often program should execute checks")]
     public double Interval { get; set; }
+    
+    [Option('D', "price-difference", Default = 1, Required = false,
+        HelpText = "Price difference in percentage, to which change of best price is considered as worthy of sending email")]
+    public double PriceDifferencePercentage { get; set; }
 
     [Option('d', "start-date-time", Required = false,
         HelpText =
