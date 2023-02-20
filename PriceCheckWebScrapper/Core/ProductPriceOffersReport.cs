@@ -1,8 +1,17 @@
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+
 namespace PriceCheckWebScrapper.Core;
 
-public readonly record struct ProductPriceOffersReport(Uri Uri, string ProductName, IEnumerable<SingularProductPriceOffer> ProductPriceOffers)
+public readonly record struct ProductPriceOffersReport(Uri Uri,
+    string ProductName,
+    IEnumerable<SingularProductPriceOffer> ProductPriceOffers)
 {
-    public static ProductPriceOffersReport Empty(Uri uri, string productName) => new ProductPriceOffersReport(uri, productName, Enumerable.Empty<SingularProductPriceOffer>());
+    public static ProductPriceOffersReport Empty(Uri uri, string productName)
+    {
+        return new(uri, productName, Enumerable.Empty<SingularProductPriceOffer>());
+    }
 
     public bool DoesQualifyForReporting(ProductPriceOffersReport otherReport)
     {
@@ -11,6 +20,11 @@ public readonly record struct ProductPriceOffersReport(Uri Uri, string ProductNa
         if (Math.Abs(thisBestOffer.Price - otherBestOffer.Price) > thisBestOffer.Price / 100)
             return true;
         return false;
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this);
     }
 }
 

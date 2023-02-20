@@ -106,8 +106,11 @@ Timer RunScheduler(PriceChecker checker, Options options)
             }
             catch (Exception e)
             {
-                stateAsTimer.PriceChecker.Logger.LogError(string.Format("Unhandled error occurred during executing timer: {0}", e.ToString()));
-                throw;
+                stateAsTimer.PriceChecker.Logger.LogError("Unhandled error occurred during executing timer: {Exception}", e.ToString());
+                stateAsTimer.PriceChecker.Options.MailManager.SendEmail(
+                    stateAsTimer.Options.EmailManagerTargetEmail, 
+                    "Unhandled exception in executing timer",
+                    e.ToString());
             }
         },
         new TimerState { Options = options, PriceChecker = checker },

@@ -14,13 +14,13 @@ namespace PriceCheckWebScrapper;
 public class PriceChecker
 {
     private readonly Dictionary<Uri, ProductPriceOffersReport> _lastSentUrlsReports = new();
-    private readonly PriceCheckerOptions _options;
     private readonly Dictionary<string, IWebDriver> _webDrivers = new();
+    public readonly PriceCheckerOptions Options;
     public readonly ILogger Logger;
 
     public PriceChecker(PriceCheckerOptions options, ILogger logger)
     {
-        _options = options;
+        Options = options;
         Logger = logger;
     }
 
@@ -32,10 +32,10 @@ public class PriceChecker
     public async Task CheckAsync(IEnumerable<string> urls, PriceCheckerOptions? overrideOptions = null)
     {
         using var scope = Logger.BeginScope("Started checking execution");
-        var options = overrideOptions ?? _options;
+        var options = overrideOptions ?? Options;
 
         var uris = urls.Select(url => new Uri(url));
-        switch (_options.RunningOptions)
+        switch (Options.RunningOptions)
         {
             case PriceCheckerRunningOption.Synchronously:
             {
@@ -80,13 +80,13 @@ public class PriceChecker
                 break;
             }
             default:
-                throw new ArgumentException(string.Format("Invalid checker option: {0}", _options.RunningOptions));
+                throw new ArgumentException(string.Format("Invalid checker option: {0}", Options.RunningOptions));
         }
     }
 
     private ProductPriceOffersReport CheckUri(IWebDriver webDriver, Uri uri)
     {
-        return PriceCheckerResolver.Resolve(uri, _options, Logger).CheckPrice(webDriver, uri);
+        return PriceCheckerResolver.Resolve(uri, Options, Logger).CheckPrice(webDriver, uri);
     }
 
     private IWebDriver GetWebDriver(string domain, WebDriverOptions webDriverOptions)
@@ -166,12 +166,12 @@ public class PriceChecker
 
         void SendReports(IEnumerable<ProductPriceOffersReport> reports)
         {
-            var builder = new MailBuilder(_options.EmailProviderSendingOptions, reports);
+            var builder = new MailBuilder(Options.EmailProviderSendingOptions, reports);
             var title = builder.Title;
             var body = builder.GetBody();
             Logger.LogInformation("Sending email to {TargetEmail} with title {Title} and body {Body}",
                 builder.TargetEmail, title, body);
-            _options.MailManager.SendEmail(builder.TargetEmail, title, body);
+            Options.MailManager.SendEmail(builder.TargetEmail, title, body);
         }
 
         void UpdateSentReports(List<ProductPriceOffersReport> productPriceOffersReports)
