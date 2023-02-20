@@ -8,6 +8,7 @@ public static class TaskRepeater
             try
             {
                 task();
+                return;
             }
             catch (Exception e)
             {
@@ -15,6 +16,9 @@ public static class TaskRepeater
                 if (i == maxAttempts - 1)
                     throw;
             }
+        
+        // it should never reach this code
+        throw new ApplicationException();
     }
     
     public static T Repeat<T>(Func<T> task, int maxAttempts, Action<int, Exception> onExceptionAction)

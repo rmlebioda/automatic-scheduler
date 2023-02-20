@@ -42,4 +42,3 @@ ARG url
 ENV URL=$url
 
 CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i 30 -v "Verbose" -D 0
-
