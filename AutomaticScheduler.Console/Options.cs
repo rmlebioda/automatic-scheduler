@@ -9,6 +9,8 @@ namespace AutomaticScheduler.Console;
 
 public class Options
 {
+    private static readonly string[] SecretProperties = { nameof(CeneoPassword), nameof(EmailManagerSenderPassword) };
+
     [Option('e', "email", Required = true, HelpText = "Email of sender")]
     public string EmailManagerSenderEmail { get; set; }
 
@@ -24,9 +26,10 @@ public class Options
     [Option('i', "interval", Required = true,
         HelpText = "Interval in minutes, how often program should execute checks")]
     public double Interval { get; set; }
-    
+
     [Option('D', "price-difference", Default = 1, Required = false,
-        HelpText = "Price difference in percentage, to which change of best price is considered as worthy of sending email")]
+        HelpText =
+            "Price difference in percentage, to which change of best price is considered as worthy of sending email")]
     public double PriceDifferencePercentage { get; set; }
 
     [Option('d', "start-date-time", Required = false,
@@ -36,6 +39,14 @@ public class Options
 
     [Option('f', "log-file", Required = false, HelpText = "Path to basic file, to which logs should be saved")]
     public string? LogFile { get; set; }
+
+    [Option('o', "output-template",
+        Default =
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}({Properties:j}){NewLine}{Exception}",
+        Required = false,
+        HelpText =
+            "Log template, for more information check https://github.com/serilog/serilog/wiki/Configuration-Basics#output-templates")]
+    public string LogTemplate { get; set; } = default!;
 
     [Option('c', "log-console", Required = false, Default = false,
         HelpText = "Whenever logs should be written to console")]
@@ -88,7 +99,6 @@ public class Options
         }
     }
 
-    private static readonly string[] SecretProperties = new string[] { nameof(CeneoPassword), nameof(EmailManagerSenderPassword) };
     public override string ToString()
     {
         var builder = new StringBuilder();
