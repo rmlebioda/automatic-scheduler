@@ -125,7 +125,7 @@ Timer RunScheduler(PriceChecker checker, Options options)
                 stateAsTimer.PriceChecker.Logger.LogError(
                     "Unhandled error occurred during executing timer: {Exception}",
                     e.ToString());
-                stateAsTimer.OverdueNotSentErrors.Add(e.ToString());
+                TryToSendException(stateAsTimer, e);
             }
             finally
             {
