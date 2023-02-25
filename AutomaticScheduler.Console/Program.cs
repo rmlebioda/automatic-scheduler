@@ -3,6 +3,7 @@ using CommandLine;
 using MailManager;
 using Microsoft.Extensions.Logging;
 using PriceCheckWebScrapper;
+using PriceCheckWebScrapper.Exceptions;
 using Serilog;
 using Serilog.Core;
 
@@ -125,7 +126,10 @@ Timer RunScheduler(PriceChecker checker, Options options)
                 stateAsTimer.PriceChecker.Logger.LogError(
                     "Unhandled error occurred during executing timer: {Exception}",
                     e.ToString());
-                TryToSendException(stateAsTimer, e);
+                stateAsTimer.OverdueNotSentErrors.Add(e.ToString());
+                
+                if (e is not EmailSendReportException)
+                    TryToSendException(stateAsTimer, e);
             }
             finally
             {
@@ -139,6 +143,7 @@ Timer RunScheduler(PriceChecker checker, Options options)
 
 void TryToSendException(TimerState state, Exception e)
 {
+    state.PriceChecker.Logger.LogInformation("Trying to send exception with email");
     try
     {
         state.PriceChecker.Options.MailManager.SendEmail(
@@ -148,24 +153,29 @@ void TryToSendException(TimerState state, Exception e)
     }
     catch (Exception exception)
     {
-        state.OverdueNotSentErrors.Add(e.ToString());
+        state.PriceChecker.Logger.LogInformation("Sending email failed with exception: {Exception}",
+            exception.ToString());
         state.OverdueNotSentErrors.Add(exception.ToString());
     }
 }
 
 void TryToSendOverdueErrors(TimerState state)
 {
+    state.PriceChecker.Logger.LogInformation("Overdue errors count: {ErrorCount}", state.OverdueNotSentErrors.Count);
+
     if (!state.OverdueNotSentErrors.Any())
         return;
 
     try
     {
+        state.PriceChecker.Logger.LogInformation("Sending overdue errors");
         state.PriceChecker.Options.MailManager.SendEmail(
             state.Options.EmailManagerTargetEmail,
             "Overdue errors",
             $"There are {state.OverdueNotSentErrors.Count} overdue errors:{Environment.NewLine}"
             + string.Join(Environment.NewLine,
                 state.OverdueNotSentErrors.Select((error, index) => $"===> Error {index}: {error}")));
+        state.PriceChecker.Logger.LogInformation("Overdue errors sent, clearing...");
         state.OverdueNotSentErrors.Clear();
     }
     catch (Exception e)

@@ -4,6 +4,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 using PriceCheckWebScrapper.Core;
 using PriceCheckWebScrapper.Core.Mail;
+using PriceCheckWebScrapper.Exceptions;
 using PriceCheckWebScrapper.Resolvers;
 
 namespace PriceCheckWebScrapper;
@@ -15,8 +16,8 @@ public class PriceChecker
 {
     private readonly Dictionary<Uri, ProductPriceOffersReport> _lastSentUrlsReports = new();
     private readonly Dictionary<string, IWebDriver> _webDrivers = new();
-    public readonly PriceCheckerOptions Options;
     public readonly ILogger Logger;
+    public readonly PriceCheckerOptions Options;
 
     public PriceChecker(PriceCheckerOptions options, ILogger logger)
     {
@@ -39,10 +40,18 @@ public class PriceChecker
         {
             case PriceCheckerRunningOption.Synchronously:
             {
-                var driver = GetWebDriver(options.WebDriverOptions);
                 var reports = new List<ProductPriceOffersReport>();
-                foreach (var uri in uris)
-                    reports.Add(CheckUri(driver, uri));
+                var driver = GetWebDriver(options.WebDriverOptions);
+                try
+                {
+                    foreach (var uri in uris)
+                        reports.Add(CheckUri(driver, uri));
+                }
+                finally
+                {
+                    driver.Close();
+                }
+
                 Report(reports);
                 break;
             }
@@ -52,7 +61,14 @@ public class PriceChecker
                 var tasks = urisByDomain.Select(domainUris => new Task<IEnumerable<ProductPriceOffersReport>>(() =>
                 {
                     var driver = GetWebDriver(domainUris.Key, options.WebDriverOptions);
-                    return GetReports();
+                    try
+                    {
+                        return GetReports();
+                    }
+                    finally
+                    {
+                        driver.Close();
+                    }
 
                     IEnumerable<ProductPriceOffersReport> GetReports()
                     {
@@ -70,8 +86,16 @@ public class PriceChecker
                 var tasks = uris.Select(uri => new Task<ProductPriceOffersReport>(() =>
                 {
                     var driver = CreateNewWebDriver(options.WebDriverOptions);
-                    var result = CheckUri(driver, uri);
-                    driver.Close();
+                    ProductPriceOffersReport result;
+                    try
+                    {
+                        result = CheckUri(driver, uri);
+                    }
+                    finally
+                    {
+                        driver.Close();
+                    }
+
                     return result;
                 })).ToList();
                 tasks.ForEach(task => task.Start());
@@ -137,7 +161,6 @@ public class PriceChecker
         var reportsToSend = new List<ProductPriceOffersReport>();
 
         foreach (var report in productsPriceOffersReports)
-        {
             if (DoesQualifyForReporting(report))
             {
                 Logger.LogInformation("Report {Report} is qualifying for sending via email and will be sent shortly",
@@ -148,7 +171,6 @@ public class PriceChecker
             {
                 Logger.LogInformation("Report {Report} does not qualify for sending via email", report.ToString());
             }
-        }
 
         if (reportsToSend.Any())
         {
@@ -170,8 +192,17 @@ public class PriceChecker
             var title = builder.Title;
             var body = builder.GetBody();
             Logger.LogInformation("Sending email to {TargetEmail} with title {Title} and body {Body}",
-                builder.TargetEmail, title, body);
-            Options.MailManager.SendEmail(builder.TargetEmail, title, body);
+                builder.TargetEmail,
+                title,
+                body);
+            try
+            {
+                Options.MailManager.SendEmail(builder.TargetEmail, title, body);
+            }
+            catch (Exception e)
+            {
+                throw new EmailSendReportException("Failed to send email due to exception: " + e.Message, e);
+            }
         }
 
         void UpdateSentReports(List<ProductPriceOffersReport> productPriceOffersReports)

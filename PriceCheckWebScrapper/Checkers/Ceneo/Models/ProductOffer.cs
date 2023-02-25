@@ -29,7 +29,7 @@ public record ProductOffer(IWebElement WebElement)
         }
     }
 
-    private const string GoToShopClassName = "go-to-shop";
+    private const string GoToShopClassName = "store-logo";
     private readonly By ByGoToShopClassName = By.ClassName(GoToShopClassName);
 
     private IWebElement GoToShopImgElement
