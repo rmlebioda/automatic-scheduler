@@ -40,5 +40,11 @@ ARG target_mail
 ENV TARGET_MAIL=$target_mail
 ARG url
 ENV URL=$url
+ARG cinema_name
+ARG cinema_town_name
+ENV CINEMA_NAME=$cinema_name
+ENV CINEMA_TOWN_NAME=$cinema_town_name
+ARG timeout
+ENV TIMEOUT=$timeout
 
-CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i 30 -v "Verbose" -D 0
+CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i 30 -v "Verbose" -D 0 --cc-cinema-name ${CINEMA_NAME} --cc-cinema-town-name ${CINEMA_TOWN_NAME} --cc-cinema-vip true --timeout ${TIMEOUT}

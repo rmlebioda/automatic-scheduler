@@ -6,6 +6,15 @@ namespace PriceCheckWebScrapper.Resolvers;
 
 internal static class PriceCheckerResolver
 {
+    public static bool IsSupported(Uri uri)
+    {
+        return uri.Host switch
+        {
+            "www.ceneo.pl" => true,
+            _ => false
+        };
+    }
+    
     public static IPriceChecker Resolve(Uri uri, PriceCheckerOptions priceCheckerOptions, ILogger logger)
     {
         return uri.Host switch

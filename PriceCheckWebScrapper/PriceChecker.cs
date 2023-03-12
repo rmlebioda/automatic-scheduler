@@ -1,11 +1,10 @@
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Firefox;
 using PriceCheckWebScrapper.Core;
 using PriceCheckWebScrapper.Core.Mail;
 using PriceCheckWebScrapper.Exceptions;
 using PriceCheckWebScrapper.Resolvers;
+using WebDriverFramework;
 
 namespace PriceCheckWebScrapper;
 
@@ -26,16 +25,22 @@ public class PriceChecker
     }
 
     /// <summary>
+    /// Checks if URI is supported by this class
+    /// </summary>
+    /// <param name="uri">URI to check</param>
+    /// <returns>if URI is supported</returns>
+    public static bool IsSupported(Uri uri) => PriceCheckerResolver.IsSupported(uri);
+
+    /// <summary>
     ///     Execute price check for given URL's.
     /// </summary>
     /// <param name="urls">URL's to be checked</param>
     /// <param name="overrideOptions">Settings, that overrides base settings set in constructor</param>
-    public async Task CheckAsync(IEnumerable<string> urls, PriceCheckerOptions? overrideOptions = null)
+    public async Task CheckAsync(IEnumerable<Uri> uris, PriceCheckerOptions? overrideOptions = null)
     {
         using var scope = Logger.BeginScope("Started checking execution");
         var options = overrideOptions ?? Options;
 
-        var uris = urls.Select(url => new Uri(url));
         switch (Options.RunningOptions)
         {
             case PriceCheckerRunningOption.Synchronously:
@@ -85,7 +90,7 @@ public class PriceChecker
             {
                 var tasks = uris.Select(uri => new Task<ProductPriceOffersReport>(() =>
                 {
-                    var driver = CreateNewWebDriver(options.WebDriverOptions);
+                    var driver = WebDriverManager.CreateNewWebDriver(options.WebDriverOptions);
                     ProductPriceOffersReport result;
                     try
                     {
@@ -118,7 +123,7 @@ public class PriceChecker
         if (_webDrivers.ContainsKey(domain))
             return _webDrivers[domain];
 
-        var newWebDriver = CreateNewWebDriver(webDriverOptions);
+        var newWebDriver = WebDriverManager.CreateNewWebDriver(webDriverOptions);
         _webDrivers.Add(domain, newWebDriver);
         return newWebDriver;
     }
@@ -128,31 +133,9 @@ public class PriceChecker
         if (_webDrivers.Count > 0)
             return _webDrivers.Values.First();
 
-        var newWebDriver = CreateNewWebDriver(webDriverOptions);
+        var newWebDriver = WebDriverManager.CreateNewWebDriver(webDriverOptions);
         _webDrivers.Add(string.Empty, newWebDriver);
         return newWebDriver;
-    }
-
-    private static IWebDriver CreateNewWebDriver(WebDriverOptions webDriverOptions)
-    {
-        switch (webDriverOptions.WebDriverType)
-        {
-            case WebDriverType.Chrome:
-            {
-                var webDriver = new ChromeDriver();
-                return webDriver;
-            }
-            case WebDriverType.Default:
-            case WebDriverType.Firefox:
-            {
-                var options = new FirefoxOptions();
-                options.AddArgument("-headless");
-                var webDriver = new FirefoxDriver(options);
-                return webDriver;
-            }
-            default:
-                throw new ArgumentException("Invalid web driver: " + webDriverOptions.WebDriverType);
-        }
     }
 
     private void Report(IEnumerable<ProductPriceOffersReport> productsPriceOffersReports)

@@ -7,8 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MailManager\MailManager.csproj" />
-      <ProjectReference Include="..\WebDriverFramework\WebDriverFramework.csproj" />
+      <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      </Reference>
+      <Reference Include="WebDriver">
+        <HintPath>..\..\..\..\..\.nuget\packages\selenium.webdriver\4.7.0\lib\net6.0\WebDriver.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
     <ItemGroup>

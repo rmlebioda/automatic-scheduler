@@ -2,8 +2,8 @@ using System.Reflection;
 using System.Text;
 using CommandLine;
 using CommandLine.Text;
-using PriceCheckWebScrapper;
 using Serilog.Events;
+using WebDriverFramework;
 
 namespace AutomaticScheduler.Console;
 
@@ -75,8 +75,17 @@ public class Options
 
     [Option('s', "make-screenshots", Required = false,
         HelpText =
-            "Whenever screenshots should be made after failures exceed maximum amount of retries (defaults to false)")]
-    public bool? MakeScreenshotPastFailureLimit { get; set; }
+            "Whenever screenshots should be made after failures exceed maximum amount of retries or failure (defaults to false)")]
+    public bool? MakeScreenshotAfterFailure { get; set; }
+    
+    [Option("cc-cinema-name", Required = false, HelpText = "Cinema name to search for on cinema-city")]
+    public string? CinemaCityName { get; set; }
+    
+    [Option("cc-cinema-town-name", Required = false, HelpText = "Town, in which cinema is located on cinema-city")]
+    public string? CinemaCityTownName { get; set; }
+    
+    [Option("cc-cinema-vip", Required = false, HelpText = "If VIP is required")]
+    public bool? CinemaCityVip { get; set; }
 
     [Usage(ApplicationAlias = "AutomaticScheduler.Console")]
     public static IEnumerable<Example> Examples

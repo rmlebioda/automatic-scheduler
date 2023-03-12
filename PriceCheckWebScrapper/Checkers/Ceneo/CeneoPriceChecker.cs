@@ -3,24 +3,43 @@ using OpenQA.Selenium;
 using PriceCheckWebScrapper.Checkers.Ceneo.Models;
 using PriceCheckWebScrapper.Core;
 using PriceCheckWebScrapper.Exceptions;
-using PriceCheckWebScrapper.Extensions;
+using WebDriverFramework;
+using WebDriverFramework.Extensions;
 
 namespace PriceCheckWebScrapper.Checkers.Ceneo;
 
 internal class CeneoPriceChecker : IPriceChecker
 {
     private const string ProductNameClassName = "product-top__product-info__name";
+    private readonly List<ExceptionHandler> _exceptionHandlers;
     private readonly bool _isLoggingInRequired = false;
     private readonly ILogger _logger;
     private readonly PriceCheckerOptions _priceCheckerOptions;
+    private readonly ScopedTask _scopedTask;
 
     public CeneoPriceChecker(PriceCheckerOptions priceCheckerOptions, ILogger logger)
     {
         _priceCheckerOptions = priceCheckerOptions;
         _logger = logger;
+        _exceptionHandlers = new List<ExceptionHandler> {PriceExceptionHandler};
+        _scopedTask = new ScopedTask(_logger,
+            _priceCheckerOptions.FailureRetries,
+            _priceCheckerOptions.MakeScreenshotAfterFailure ? _priceCheckerOptions.LogDirectory : null,
+            _exceptionHandlers);
     }
 
     private By ByProductNameClassName => By.ClassName(ProductNameClassName);
+
+    private ExceptionHandler PriceExceptionHandler =>
+        new()
+        {
+            ShouldRetry = false,
+            ShouldHandle = exception =>
+                exception is PriceCheckException && ((PriceCheckException) exception).IsExceptionReasonFatal,
+            Handler = exception =>
+                _logger.LogError(string.Format("Execution halted, encountered unrecoverable exception: {0}",
+                    exception))
+        };
 
     public ProductPriceOffersReport CheckPrice(IWebDriver webDriver, Uri uri)
     {
@@ -40,85 +59,9 @@ internal class CeneoPriceChecker : IPriceChecker
         }
     }
 
-    private T ExecuteScopedTask<T>(Func<T> task, string scopedMessage, IWebDriver driver)
-    {
-        using (_logger.BeginScope(scopedMessage))
-        {
-            try
-            {
-                return TaskRepeater.Repeat(() => task(),
-                    _priceCheckerOptions.FailureRetries,
-                    (attempt, exception) =>
-                    {
-                        _logger.LogWarning(
-                            string.Format("Attempt {0} failed due to exception: {1}", attempt, exception));
-                    });
-            }
-            catch (PriceCheckException e) when (e.IsExceptionReasonFatal)
-            {
-                _logger.LogError(string.Format("Execution halted, encountered unrecoverable exception: {0}", e));
-                throw;
-            }
-            catch (Exception e)
-            {
-                if (!string.IsNullOrEmpty(_priceCheckerOptions.LogDirectory) &&
-                    _priceCheckerOptions.MakeScreenshotPastFailureLimit)
-                {
-                    if (driver is ITakesScreenshot takesScreenshotDriver)
-                        takesScreenshotDriver.TakeScreenshot(_priceCheckerOptions.LogDirectory);
-                    else
-                        _logger.LogWarning(string.Format(
-                            "Unable to make screenshot, because IDriver does not conform to type ITakesScreenshot (IDriver type is: {0}",
-                            driver.GetType()));
-                }
-
-                _logger.LogError(string.Format("Failed to load page due to unhandled exception: {0}", e));
-                throw;
-            }
-        }
-    }
-
-    private void ExecuteScopedTask(Action task, string scopedMessage, IWebDriver driver)
-    {
-        using (_logger.BeginScope(scopedMessage))
-        {
-            try
-            {
-                TaskRepeater.Repeat(() => task(),
-                    _priceCheckerOptions.FailureRetries,
-                    (attempt, exception) =>
-                    {
-                        _logger.LogWarning(
-                            string.Format("Attempt {0} failed due to exception: {1}", attempt, exception));
-                    });
-            }
-            catch (PriceCheckException e) when (e.IsExceptionReasonFatal)
-            {
-                _logger.LogError(string.Format("Execution halted, encountered unrecoverable exception: {0}", e));
-                throw;
-            }
-            catch (Exception e)
-            {
-                if (!string.IsNullOrEmpty(_priceCheckerOptions.LogDirectory) &&
-                    _priceCheckerOptions.MakeScreenshotPastFailureLimit)
-                {
-                    if (driver is ITakesScreenshot takesScreenshotDriver)
-                        takesScreenshotDriver.TakeScreenshot(_priceCheckerOptions.LogDirectory);
-                    else
-                        _logger.LogWarning(string.Format(
-                            "Unable to make screenshot, because IDriver does not conform to type ITakesScreenshot (IDriver type is: {0}",
-                            driver.GetType()));
-                }
-
-                _logger.LogError(string.Format("Failed to load page due to unhandled exception: {0}", e));
-                throw;
-            }
-        }
-    }
-
     private void LoadWebpage(IWebDriver webDriver, Uri uri)
     {
-        ExecuteScopedTask(() => { webDriver.Navigate().GoToUrl(uri.AbsoluteUri); },
+        _scopedTask.Execute(() => { webDriver.Navigate().GoToUrl(uri.AbsoluteUri); },
             string.Format("Loading page {0}", uri.AbsoluteUri),
             webDriver);
     }
@@ -135,7 +78,7 @@ internal class CeneoPriceChecker : IPriceChecker
 
     private void LogInUser(IWebDriver webDriver, Uri uri)
     {
-        ExecuteScopedTask(() =>
+        _scopedTask.Execute(() =>
             {
                 if (!IsLoggedIn(webDriver))
                 {
@@ -261,7 +204,7 @@ internal class CeneoPriceChecker : IPriceChecker
 
     private ProductPriceOffersReport CheckProductPrice(IWebDriver webDriver, Uri uri)
     {
-        return ExecuteScopedTask(() =>
+        return _scopedTask.Execute(() =>
             {
                 EnsureRightPageIsLoaded(webDriver, uri);
                 var productsOffers = GetMultipleProductOffers();

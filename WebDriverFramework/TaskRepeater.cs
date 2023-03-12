@@ -1,4 +1,4 @@
-namespace PriceCheckWebScrapper.Core;
+namespace WebDriverFramework;
 
 public static class TaskRepeater
 {

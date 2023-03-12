@@ -1,4 +1,4 @@
-namespace PriceCheckWebScrapper;
+namespace WebDriverFramework;
 
 public readonly record struct WebDriverOptions
 {

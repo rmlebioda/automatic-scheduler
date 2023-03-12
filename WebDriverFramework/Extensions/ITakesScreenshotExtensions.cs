@@ -1,6 +1,6 @@
 using OpenQA.Selenium;
 
-namespace PriceCheckWebScrapper.Extensions;
+namespace WebDriverFramework.Extensions;
 
 public static class ITakesScreenshotExtensions
 {

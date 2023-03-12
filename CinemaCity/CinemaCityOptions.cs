@@ -1,8 +1,9 @@
+using PriceCheckWebScrapper;
 using WebDriverFramework;
 
-namespace PriceCheckWebScrapper;
+namespace CinemaCity;
 
-public readonly record struct PriceCheckerOptions()
+public readonly record struct CinemaCityOptions()
 {
     /// <summary>
     /// Directory for storing additional logs/screenshots
@@ -18,11 +19,6 @@ public readonly record struct PriceCheckerOptions()
     /// Sets what should be attached with email provider
     /// </summary>
     public EmailProviderSendingOptions EmailProviderSendingOptions { get; init; }
-
-    /// <summary>
-    /// How script should be ran
-    /// </summary>
-    public PriceCheckerRunningOption RunningOptions { get; init; } = PriceCheckerRunningOption.AsynchronouslyPerDomain;
     
     /// <summary>
     /// Desired web driver
@@ -45,12 +41,17 @@ public readonly record struct PriceCheckerOptions()
     public bool MakeScreenshotAfterFailure { get; init; }
     
     /// <summary>
-    /// Website login credentials
+    /// Town, in which desired cinema is located
     /// </summary>
-    public WebsiteCredentialls WebsiteCredentialls { get; init; }
+    public string CinemaTownName { get; init; }
     
     /// <summary>
-    /// Price difference in percentage, to which change of best price is considered as worthy of sending email
+    /// Cinema name to search for
     /// </summary>
-    public double PriceDifferencePercentage { get; init; }
+    public string CinemaName { get; init; }
+    
+    /// <summary>
+    /// If VIP is required
+    /// </summary>
+    public bool NeedsToBeVip { get; init; }
 }
