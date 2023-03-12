@@ -51,7 +51,7 @@ public class CinemaCityChecker
             var cinemaLocationResults = WaitForCinemaListToLoad();
             var cinemaLocationResult = FilterCinemaResults(cinemaLocationResults);
             var showtimeWebElements = GetShowtimeWebElements(cinemaLocationResult);
-            var showtimes = GetShowtimes(showtimeWebElements);
+            var showtimes = GetShowtimes(showtimeWebElements).ToList();
             return new CinemaCityCinemaReport(
                 uri.AbsoluteUri,
                 _options.CinemaName,
@@ -182,12 +182,11 @@ public class CinemaCityChecker
 
     private CinemaCityShowtime CheckShowtime(IWebElement showtimeWebElement)
     {
+        _webDriver.SwitchTo().Window(_webDriver.WindowHandles[0]);
         var showtimeDate =
             _webDriver.FindElement(By.XPath(".//div[contains(@class, 'qb-calendar-widget')]/div/div[2]/h5")).Text;
         var showtimeTime = showtimeWebElement.Text;
         var showtimeDateTime = DateTime.ParseExact(showtimeDate.Substring(showtimeDate.Length - 10) + " " + showtimeTime, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
-        // var moveToViewElement = new Actions(_webDriver);
-        //moveToViewElement.MoveToElement(showtimeWebElement).Perform();
         ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView(true);", showtimeWebElement);
         ((IJavaScriptExecutor)_webDriver).ExecuteScript("scroll(0,-80)");
         showtimeWebElement.Click();

@@ -48,10 +48,18 @@ public class ScheduleRunner<Service, TimerState> where TimerState : BaseTimerSta
                     _logger.LogError(
                         "Unhandled error occurred during executing timer: {Exception}",
                         e.ToString());
-                    stateAsTimer.OverdueNotSentErrors.Add(e.ToString());
 
                     if (e is not EmailSendReportException)
-                        TryToSendException(stateAsTimer, e);
+                    {
+                        if (!TryToSendException(stateAsTimer, e))
+                        {
+                            stateAsTimer.OverdueNotSentErrors.Add(e.ToString());
+                        }
+                    }
+                    else
+                    {
+                        stateAsTimer.OverdueNotSentErrors.Add(e.ToString());
+                    }
                 }
                 finally
                 {
@@ -63,7 +71,7 @@ public class ScheduleRunner<Service, TimerState> where TimerState : BaseTimerSta
             TimeSpan.FromMinutes(_options.Interval));
     }
 
-    private void TryToSendException(TimerState state, Exception e)
+    private bool TryToSendException(TimerState state, Exception e)
     {
         _logger.LogInformation("Trying to send exception with email");
         try
@@ -72,12 +80,14 @@ public class ScheduleRunner<Service, TimerState> where TimerState : BaseTimerSta
                 _options.EmailManagerTargetEmail,
                 "Unhandled exception in executing timer",
                 e.ToString());
+            return true;
         }
         catch (Exception exception)
         {
             _logger.LogInformation("Sending email failed with exception: {Exception}",
                 exception.ToString());
             state.OverdueNotSentErrors.Add(exception.ToString());
+            return false;
         }
     }
 
@@ -87,7 +97,9 @@ public class ScheduleRunner<Service, TimerState> where TimerState : BaseTimerSta
             state.OverdueNotSentErrors.Count);
 
         if (!state.OverdueNotSentErrors.Any())
+        {
             return;
+        }
 
         try
         {

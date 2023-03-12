@@ -46,5 +46,7 @@ ENV CINEMA_NAME=$cinema_name
 ENV CINEMA_TOWN_NAME=$cinema_town_name
 ARG timeout
 ENV TIMEOUT=$timeout
+ARG interval
+ENV INTERVAL=$interval
 
-CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i 30 -v "Verbose" -D 0 --cc-cinema-name ${CINEMA_NAME} --cc-cinema-town-name ${CINEMA_TOWN_NAME} --cc-cinema-vip true --timeout ${TIMEOUT}
+CMD dotnet AutomaticScheduler.Console.dll -f ${LOG_PATH} -c true -e ${SENDER_MAIL} -p ${SENDER_PASS} -t ${TARGET_MAIL} -u ${URL} -i ${INTERVAL} -v "Verbose" -D 0 --cc-cinema-name ${CINEMA_NAME} --cc-cinema-town-name ${CINEMA_TOWN_NAME} --cc-cinema-vip true --timeout ${TIMEOUT}

@@ -3,7 +3,6 @@ using CinemaCity.Checkers;
 using CinemaCity.Models;
 using CinemaCity.Resolvers;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using WebDriverFramework;
 
 namespace CinemaCity;
@@ -87,7 +86,8 @@ public class CinemaCityService
             }
         }
 
-        if (showtimesToReport.Any())
+        if (showtimesToReport.Select(report => report
+                .Showtimes).SelectMany(x => x).Any())
         {
             SendEmail(showtimesToReport);
         }

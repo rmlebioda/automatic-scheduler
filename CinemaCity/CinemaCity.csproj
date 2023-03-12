@@ -7,14 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="WebDriver">
-        <HintPath>..\..\..\..\..\.nuget\packages\selenium.webdriver\4.7.0\lib\net6.0\WebDriver.dll</HintPath>
-      </Reference>
+        <Reference Include="WebDriver">
+            <HintPath>..\..\..\..\..\.nuget\packages\selenium.webdriver\4.7.0\lib\net6.0\WebDriver.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MailManager\MailManager.csproj" />
-      <ProjectReference Include="..\PriceCheckWebScrapper\PriceCheckWebScrapper.csproj" />
+        <ProjectReference Include="..\MailManager\MailManager.csproj"/>
+        <ProjectReference Include="..\PriceCheckWebScrapper\PriceCheckWebScrapper.csproj"/>
     </ItemGroup>
 
 </Project>

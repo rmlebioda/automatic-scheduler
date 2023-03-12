@@ -8,18 +8,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\CinemaCity\CinemaCity.csproj" />
-        <ProjectReference Include="..\MailManager\MailManager.csproj" />
-        <ProjectReference Include="..\PriceCheckWebScrapper\PriceCheckWebScrapper.csproj" />
+        <ProjectReference Include="..\CinemaCity\CinemaCity.csproj"/>
+        <ProjectReference Include="..\MailManager\MailManager.csproj"/>
+        <ProjectReference Include="..\PriceCheckWebScrapper\PriceCheckWebScrapper.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommandLineParser" Version="2.9.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
-        <PackageReference Include="Serilog" Version="2.12.1-dev-01635" />
-        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10301" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00901" />
-        <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00947" />
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0"/>
+        <PackageReference Include="Serilog" Version="2.12.1-dev-01635"/>
+        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10301"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00901"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00947"/>
     </ItemGroup>
 
 </Project>
